@@ -1,0 +1,40 @@
+#!/bin/bash
+set -x
+/etc/fw.stop
+
+WANIF="$(ip -4 route get 1.1.1.1 | grep -Po '(?<=dev )(\S+)')"
+LOOPBACKIF="$(ip link | grep -Po '(?<=\d: )(lo[-0-9a-zA-Z_]*)' | head -n 1)"
+DOCKERIF="$(ip link | grep -Po '(?<=\d: )(docker[-0-9a-zA-Z_]*)' | head -n 1)"
+
+# netfilter table: filter
+
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+echo applying firewall rules for $WANIF ...
+
+# Create table FIREWALL
+iptables -N FIREWALL
+
+# INPUT Jump to FIREWAL
+iptables -A INPUT -j FIREWALL
+
+# DOCKER-USER Jump to FIREWALL
+iptables -A DOCKER-USER -j FIREWALL
+
+# DOCKER-USER Default action
+iptables -A DOCKER-USER -j RETURN
+
+{% include "fw_accept_rules.j2" %}
+
+iptables -A FIREWALL -i $LOOPBACKIF -j ACCEPT
+iptables -A FIREWALL -p icmp -m icmp --icmp-type 8 -j ACCEPT
+iptables -A FIREWALL -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A FIREWALL -p tcp -j REJECT --reject-with tcp-reset
+iptables -A FIREWALL -p udp -j REJECT --reject-with icmp-port-unreachable
+
+# Default action
+iptables -A FIREWALL -j RETURN
+
+echo DONE!

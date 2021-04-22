@@ -1,0 +1,9 @@
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+    name: firewall
+    enabled: yes
+- name: Reload firewall rules
+  systemd:
+    name: firewall
+    state: restarted

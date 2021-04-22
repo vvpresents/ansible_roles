@@ -1,0 +1,16 @@
+[Unit]
+Description=iptables-firewall
+DefaultDependencies=no
+After=docker.service
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/etc/fw.start
+ExecStop=/etc/fw.stop
+ExecReload=/etc/fw.stop
+
+
+[Install]
+WantedBy=multi-user.target

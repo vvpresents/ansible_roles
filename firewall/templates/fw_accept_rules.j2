@@ -1,0 +1,14 @@
+# добавление правил для адресов и портов из переменных ansible
+{% for rule in fw_accept_rules + extra_fw_accept_rules -%}
+
+{% set comment  = rule["comment"]  | default("") %}
+{% set protocol = rule["protocol"] | default("tcp") %}
+{% set ip       = rule["ip"]       | default("0.0.0.0/0") %}
+{% set ports    = rule["ports"]    | default("1:65535") -%}
+
+{%- set isAllowDefinePorts = protocol not in ("all", "icmp") %}
+{% set destinationPortsSuffix = "--dport " + ports|string if isAllowDefinePorts else '' %}
+
+# {{ comment }}
+iptables -A FIREWALL -s {{ ip }} -p {{ protocol }} {{ destinationPortsSuffix }} -j ACCEPT
+{% endfor %}

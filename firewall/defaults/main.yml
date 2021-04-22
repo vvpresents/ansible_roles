@@ -1,0 +1,15 @@
+# в массивах ниже можно НЕ инициализировать любые из ключей (ip, ports, comment, protocol) 
+# так как по умолчанию при генерации fw.start они будут равны (0.0.0.0/0, 1:65535, "", tcp)  и всякий раз будет сгенерировано корректное правило iptables
+fw_accept_rules: 
+  - ip: 12.34.56.78
+    ports: 9000:10000
+    comment: "Prometheus exporters"
+  - ports: 22
+    comment: "SSH"
+  - ports: 22022
+    comment: "SSH"
+  - ip: 12.34.56.78
+    ports: 10050
+    comment: "zabbix"
+
+extra_fw_accept_rules: []

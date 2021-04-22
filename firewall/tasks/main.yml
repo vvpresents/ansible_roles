@@ -1,0 +1,27 @@
+- name: Generate fw.start
+  template:
+    src: "fw.start.j2"
+    dest: "/etc/fw.start"
+    mode: 0755
+    owner: root
+    group: root
+    backup: yes
+  notify: Reload firewall rules
+
+- name: Copy fw.stop
+  copy:
+    src: "fw.stop"
+    dest: "/etc"
+    mode: 0755
+    owner: root
+    group: root
+  notify: Reload firewall rules
+
+- name: Copy service configuration
+  copy:
+    src: "firewall.service"
+    dest: "/etc/systemd/system"
+    mode: 0644
+    owner: root
+    group: root
+  notify: Reload systemd
