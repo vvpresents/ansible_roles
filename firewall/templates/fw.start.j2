@@ -31,8 +31,8 @@ iptables -A DOCKER-USER -j RETURN
 iptables -A FIREWALL -i $LOOPBACKIF -j ACCEPT
 iptables -A FIREWALL -p icmp -m icmp --icmp-type 8 -j ACCEPT
 iptables -A FIREWALL -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-iptables -A FIREWALL -p tcp -j REJECT --reject-with tcp-reset
-iptables -A FIREWALL -p udp -j REJECT --reject-with icmp-port-unreachable
+iptables -A FIREWALL -p tcp -j REJECT
+iptables -A FIREWALL -p udp -j REJECT
 
 # Default action
 iptables -A FIREWALL -j RETURN
