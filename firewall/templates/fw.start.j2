@@ -12,7 +12,7 @@ iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-echo applying firewall rules for $WANIF ...
+echo applying firewall rules ...
 
 # Create table FIREWALL
 iptables -N FIREWALL
