@@ -1,0 +1,21 @@
+ssh_auth_keys_users_home_dir: /home
+ssh_auth_keys_dotssh_dir_perm: '0700'
+ssh_auth_keys_authorized_keys_perm: '0644'
+ssh_auth_keys_authorized_keys_backup: yes 
+ssh_auth_keys_path_to_keyfiles: ""    # could be like: "" or "/any/another/path/"  (must ended with slash if not empty)
+ssh_auth_keys_users_keyfiles:
+  - user: root
+    keyfile: root.pubs
+  - user: www
+    keyfile: www.pubs
+  - user: tester
+    keyfile: tester.pubs
+  - user: guest
+    keyfile: guest.pubs
+
+extra_ssh_auth_keys_users_keyfiles: []
+
+  # - www: www.pubs
+  # - tester: tester.pubs
+  # - guest: guest.pubs
+  

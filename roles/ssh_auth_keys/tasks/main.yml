@@ -1,0 +1,102 @@
+    - name: Get users info
+      getent:
+        database: passwd
+      register: remote_users
+    
+    # - debug:
+    #     var: remote_users
+
+    - name: Check that the users home dirs exist
+      stat:
+        path: "{{ ssh_auth_keys_users_home_dir }}/{{ item['user'] }}"
+        follow: no
+        get_attributes: no
+        get_checksum: no
+        get_mime: no
+      register: ssh_auth_keys_home_dirs_exist_status
+      loop:
+        "{{ ssh_auth_keys_users_keyfiles + extra_ssh_auth_keys_users_keyfiles }}"
+
+    # - name: Check that the users .ssh dirs exist
+    #   stat:
+    #     path: "{{ ssh_auth_keys_users_home_dir }}/{{ item['user'] }}/.ssh"
+    #     follow: no
+    #     get_attributes: no
+    #     get_checksum: no
+    #     get_mime: no
+    #   register: ssh_auth_keys_dotssh_dirs_exist_status
+    #   loop:
+    #     "{{ ssh_auth_keys_users_keyfiles + extra_ssh_auth_keys_users_keyfiles }}"
+
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_home_dirs_exist_status['results'][2]['stat']['exists']
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_dotssh_dirs_exist_status['results'][2]['stat']['exists']
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_home_dirs_exist_status['results'][3]['stat']['exists']
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_dotssh_dirs_exist_status['results'][3]['stat']['exists']
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_home_dirs_exist_status['results'][4]['stat']['exists']
+    # - name: Print VAR
+    #   debug:
+    #     # msg: "{{ ssh_auth_keys_home_dirs_exist_status }}"
+    #     var: ssh_auth_keys_dotssh_dirs_exist_status['results'][4]['stat']['exists']
+
+    - name: Create .ssh dir in users dirs if user and his dir exists and .ssh dir doesn't exist
+      file:
+        path: "{{ ssh_auth_keys_users_home_dir }}/{{ item[0]['user'] }}/.ssh"
+        mode: "{{ ssh_auth_keys_dotssh_dir_perm }}"
+        owner: "{{ item[0]['user'] }}"
+        group: "{{ item[0]['user'] }}"
+        state: directory
+      with_together:
+        - "{{ ssh_auth_keys_users_keyfiles + extra_ssh_auth_keys_users_keyfiles }}"
+        - "{{ ssh_auth_keys_home_dirs_exist_status['results'] }}"
+      when:
+        item[1]['stat']['exists'] and item[1]['stat']['isdir']  and ( item[0]['user'] in remote_users['ansible_facts']['getent_passwd'] )
+
+    - name: Copy .pubs to .ssh/authorized_keys if users and his dir exists
+      copy:
+        src: "{{ ssh_auth_keys_path_to_keyfiles }}{{ item[0]['keyfile'] }}"
+        dest: "{{ ssh_auth_keys_users_home_dir }}/{{ item[0]['user'] }}/.ssh/authorized_keys"
+        mode: "{{ ssh_auth_keys_authorized_keys_perm }}"
+        owner: "{{ item[0]['user'] }}"
+        group: "{{ item[0]['user'] }}"
+        backup: "{{ ssh_auth_keys_authorized_keys_backup }}"
+      with_together:
+        - "{{ ssh_auth_keys_users_keyfiles + extra_ssh_auth_keys_users_keyfiles }}"
+        - "{{ ssh_auth_keys_home_dirs_exist_status['results'] }}"
+      when:
+        item[1]['stat']['exists'] and item[1]['stat']['isdir']  and ( item[0]['user'] in remote_users['ansible_facts']['getent_passwd'] )
+
+    - name: Create .ssh dir for root
+      file:
+        path: "/root/.ssh"
+        mode: "{{ ssh_auth_keys_dotssh_dir_perm }}"
+        owner: root
+        group: root
+        state: directory
+
+    - name: Copy root.pubs to /root/.ssh/authorized_keys # обработка в цикле для того чтобы не заводить отдельную переменную с файлом ключей для пользователя root
+      copy:
+        src: "{{ ssh_auth_keys_path_to_keyfiles }}{{ item['keyfile'] }}"
+        dest: "/{{ item['user'] }}/.ssh/authorized_keys"
+        mode: "{{ ssh_auth_keys_authorized_keys_perm }}"
+        owner: "{{ item['user'] }}"
+        group: "{{ item['user'] }}"
+        backup: "{{ ssh_auth_keys_authorized_keys_backup }}"
+      loop:
+        "{{ ssh_auth_keys_users_keyfiles + extra_ssh_auth_keys_users_keyfiles }}"
+      when:
+        item['user'] == 'root' and ( item['user'] in remote_users['ansible_facts']['getent_passwd'] )
